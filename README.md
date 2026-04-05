@@ -1,4 +1,4 @@
-# Ledger — Finance Dashboard
+# Finance Dashboard
 
 A clean, interactive personal finance dashboard built using HTML, CSS and JS.
 
