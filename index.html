@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>finance dashboard interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+
+</head>
+
+<body>
+
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- App Shell -->
+    <div class="app">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <div class="wordmark">Le<span>d</span>ger</div>
+                <div class="tagline">Financial Intelligence</div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-label">Main</div>
+                <div class="nav-item active" onclick="navigate('dashboard', this)">
+                    <span class="icon">◈</span> Overview
+                </div>
+                <div class="nav-item" onclick="navigate('transactions', this)">
+                    <span class="icon">⇄</span> Transactions
+                </div>
+                <div class="nav-item" onclick="navigate('insights', this)">
+                    <span class="icon">◎</span> Insights
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="role-switcher">
+                    <div class="role-label">Active Role</div>
+                    <select class="role-select" id="roleSelect" onchange="switchRole(this.value)">
+                        <option value="viewer">Viewer</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <div class="role-badge">
+                        <span class="dot"></span>
+                        <span id="roleBadgeText">Viewer — Read Only</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="flex items-center gap8">
+                    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+                    <div class="topbar-title" id="topbarTitle">Overview</div>
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-date" id="topbarDate"></div>
+                    <button class="btn btn-primary" id="addTxBtn" style="display:none" onclick="openModal()">+ Add
+                        Transaction</button>
+                </div>
+            </div>
+
+            <!-- ── DASHBOARD ── -->
+            <div class="page active" id="page-dashboard">
+                <!-- Stat Cards -->
+                <div class="grid grid-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Total Balance</div>
+                            <div class="stat-icon" style="background:var(--gold-dim); color:var(--gold)">◈</div>
+                        </div>
+                        <div class="stat-value col-gold" id="stat-balance">—</div>
+                        <div class="stat-label">Current Balance</div>
+                        <div class="stat-delta delta-up" id="stat-balance-delta">↑ —</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Total Income</div>
+                            <div class="stat-icon" style="background:var(--green-dim); color:var(--green)">↑</div>
+                        </div>
+                        <div class="stat-value" style="color:var(--green)" id="stat-income">—</div>
+                        <div class="stat-label">This period</div>
+                        <div class="stat-delta delta-up" id="stat-income-delta">↑ —</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Total Expenses</div>
+                            <div class="stat-icon" style="background:var(--red-dim); color:var(--red)">↓</div>
+                        </div>
+                        <div class="stat-value" style="color:var(--red)" id="stat-expenses">—</div>
+                        <div class="stat-label">This period</div>
+                        <div class="stat-delta delta-down" id="stat-expenses-delta">↑ —</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Net Savings</div>
+                            <div class="stat-icon" style="background:var(--blue-dim); color:var(--blue)">◉</div>
+                        </div>
+                        <div class="stat-value" style="color:var(--blue)" id="stat-savings">—</div>
+                        <div class="stat-label">Income minus expenses</div>
+                        <div class="stat-delta" id="stat-savings-delta">—</div>
+                    </div>
+                </div>
+
+                <!-- Charts row -->
+                <div class="grid grid-2 mt20">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Balance Trend — 6 Months</div>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Spending by Category</div>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="donutChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent + Monthly -->
+                <div class="grid grid-2 mt20">
+                    <div class="card">
+                        <div class="section-hd">
+                            <div class="card-title">Recent Transactions</div>
+                            <span class="text-sm" style="cursor:pointer;color:var(--gold)"
+                                onclick="navigate('transactions', document.querySelector('[onclick*=transactions]'))">View
+                                all →</span>
+                        </div>
+                        <div id="recentTxList"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title mb16">Monthly Overview</div>
+                        <div id="monthlyChart"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── TRANSACTIONS ── -->
+            <div class="page" id="page-transactions">
+                <div id="adminNotice" class="admin-notice" style="display:none">
+                    ✦ Admin mode — You can add, edit, and delete transactions
+                </div>
+
+                <div class="tx-controls">
+                    <div class="search-wrap">
+                        <span class="search-icon">⌕</span>
+                        <input type="text" id="searchInput" placeholder="Search transactions…"
+                            oninput="renderTransactions()" />
+                    </div>
+                    <select class="filter-select" id="typeFilter" onchange="renderTransactions()">
+                        <option value="">All Types</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                    <select class="filter-select" id="catFilter" onchange="renderTransactions()">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select class="filter-select" id="monthFilter" onchange="renderTransactions()">
+                        <option value="">All Months</option>
+                    </select>
+                    <div class="export-bar">
+                        <button class="btn btn-ghost tooltip" data-tip="Export CSV" onclick="exportCSV()">↓ CSV</button>
+                        <button class="btn btn-ghost tooltip" data-tip="Export JSON" onclick="exportJSON()">↓
+                            JSON</button>
+                    </div>
+                </div>
+
+                <div class="tx-table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortBy('date')">Date <span id="sort-date"></span></th>
+                                <th onclick="sortBy('description')">Description <span id="sort-description"></span></th>
+                                <th onclick="sortBy('category')">Category <span id="sort-category"></span></th>
+                                <th onclick="sortBy('type')">Type <span id="sort-type"></span></th>
+                                <th onclick="sortBy('amount')" style="text-align:right">Amount <span
+                                        id="sort-amount"></span></th>
+                                <th id="actionsCol" style="display:none">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="txTableBody"></tbody>
+                    </table>
+                    <div id="txEmpty" class="empty-state" style="display:none">
+                        <div class="icon">◎</div>
+                        <p>No transactions match your filters.</p>
+                    </div>
+                </div>
+                <div class="mt8 text-sm text-mono" id="txCount"></div>
+            </div>
+
+            <!-- ── INSIGHTS ── -->
+            <div class="page" id="page-insights">
+                <div class="grid grid-3" id="insightCards"></div>
+                <div class="grid grid-2 mt20">
+                    <div class="card">
+                        <div class="card-title mb16">Spending by Category — Detail</div>
+                        <div id="catBreakdown"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title mb16">Month-over-Month Comparison</div>
+                        <div class="chart-wrap-sm">
+                            <canvas id="momChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Add/Edit Transaction Modal -->
+    <div class="modal-backdrop" id="modalBackdrop" style="display:none" onclick="closeModalOnBg(event)">
+        <div class="modal">
+            <div class="modal-title" id="modalTitle">New Transaction</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" id="f-type" onchange="updateTypeColor()">
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (₹)</label>
+                    <input type="number" class="form-input" id="f-amount" placeholder="0.00" min="0" step="0.01" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" class="form-input" id="f-desc" placeholder="e.g. Monthly Salary" />
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="f-cat">
+                        <option>Salary</option>
+                        <option>Freelance</option>
+                        <option>Food & Dining</option>
+                        <option>Transport</option>
+                        <option>Utilities</option>
+                        <option>Shopping</option>
+                        <option>Healthcare</option>
+                        <option>Entertainment</option>
+                        <option>Education</option>
+                        <option>Investment</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="f-date" />
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTransaction()">Save Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
